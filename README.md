@@ -1,58 +1,57 @@
-# Журнал успеваемости (Задача 12, продвинутый уровень, ООП Java)
+# Gradebook
 
-Библиотека классов модели предметной области «Журнал успеваемости» и консольное
-приложение, демонстрирующее все операции базового и повышенного уровня.
+A class library modeling a "Gradebook" domain, accompanied by a console application that demonstrates all basic and advanced-level operations.
 
-## Сборка и запуск
+## Build and Run
 
 ```bash
-mvn test                                    # запуск JUnit 5 тестов (19 сценариев)
-mvn compile exec:java                       # запуск консольной демонстрации
+mvn test                                    # Run JUnit 5 tests (19 scenarios)
+mvn compile exec:java                       # Run the console demonstration
 ```
 
-Требования: JDK 17+, Maven (код совместим с Java 21; record, sealed-иерархии, var).
+Requirements: JDK 17+ and Maven (code is compatible with Java 21; utilizes records, sealed hierarchies, and `var`).
 
-## Описание модели (`gradebook.model`)
+## Model Description (`gradebook.model`)
 
-| Класс | Назначение |
+| Class | Purpose |
 |---|---|
-| `Mark` | enum оценок с полями (название, диапазон баллов) и фабричным методом `byPoints(int)` |
-| `ControlPoint` | enum контрольных точек с весом и проходным баллом; константа `EXAM` переопределяет метод `isFinal()` |
-| `CourseModule` | **sealed**-интерфейс модулей курса с полиморфным методом `controlPoints()`; реализации-record'ы `LectureModule`, `PracticeModule`, `LabModule` |
-| `Subject` | дисциплина: набор модулей, уникальные контрольные точки, `equals/hashCode` по названию |
-| `Student` | студент, ключ равенства — номер зачётной книжки (`equals/hashCode`), реализует `Participant` |
-| `Group` | группа студентов, реализует `Participant`, `equals/hashCode` по названию |
-| `Participant` | интерфейс с полиморфным методом `averageGrade(journal, subject)` (студент и группа считают средний балл по-разному) |
-| `Grade` | **record**: оценка студента за точку дисциплины на дату, проверка диапазона 0..100 |
-| `GradeJournal` | агрегат: выставление баллов, пересдачи, средние, отличники/должники, ведомости, рейтинг |
-| `RetakeLimitExceededException` | собственное исключение: превышено число попыток пересдачи (лимит 3) |
+| `Mark` | An enum representing grades, containing fields (name, score range) and a factory method `byPoints(int)` |
+| `ControlPoint` | An enum for assessment points, including weight and a passing score; the `EXAM` constant overrides the `isFinal()` method |
+| `CourseModule` | A **sealed** interface for course modules, featuring a polymorphic `controlPoints()` method; implemented via records: `LectureModule`, `PracticeModule`, and `LabModule` |
+| `Subject` | A course subject: a collection of modules and unique assessment points; `equals/hashCode` are based on the subject name |
+| `Student` | A student; equality is determined by their record book number (`equals/hashCode`); implements the `Participant` interface |
+| `Group` | A group of students; implements the `Participant` interface; `equals/hashCode` are based on the group name |
+| `Participant` | An interface with a polymorphic `averageGrade(journal, subject)` method (students and groups calculate their average grades differently) |
+| `Grade` | A **record** representing a student's grade for a specific assessment point on a given date; includes validation for a score range of 0–100 |
+| `GradeJournal` | System: assigning grades, retakes, averages, high-achievers/students with outstanding debts, grade reports, and rankings |
+| `RetakeLimitExceededException` | custom exception: thrown when the maximum number of retakes (limit: 3) is exceeded |
 
-## Реализованные операции
+## Implemented Operations
 
-Базовый уровень:
-- выставление баллов с проверкой диапазона 0..100;
-- средний балл по студенту, по дисциплине и по группе (полиморфно через `Participant`);
-- отличники (порог среднего балла) и должники (не набран проходной балл последней попытки);
-- ведомость по дисциплине на заданную дату (`sheetByDate`, `java.time.LocalDate`).
+Basic Level:
+- Assigning grades with validation (range: 0–100);
+- Calculating average grades for a student, a subject, or a group (implemented polymorphically via `Participant`);
+- Identifying high-achievers (based on an average grade threshold) and students with outstanding debts (those who failed to reach the passing score on their final attempt);
+- Generating a grade report for a specific subject as of a given date (`sheetByDate`, using `java.time.LocalDate`).
 
-Повышенный уровень:
-- пересдачи: история попыток с датами (`attemptHistory`);
-- ограничение числа попыток с выбросом `RetakeLimitExceededException`;
-- итог по последней попытке (`finalScore`);
-- рейтинг студента как взвешенная сумма последних попыток контрольных точек (`rating`).
+Advanced Level:
+- Retake management: tracking the history of attempts, including dates (`attemptHistory`);
+- Enforcing a limit on the number of attempts, throwing a `RetakeLimitExceededException` when exceeded;
+- Determining the final result based on the last attempt (`finalScore`);
+- Calculating a student's ranking as a weighted sum of the most recent attempts for key assessment points (`rating`).
 
-## Демонстрация (`gradebook.app.Main`)
+## Demonstration (`gradebook.app.Main`)
 
-Наполняет модель 30 студентами, 2 группами, 2 дисциплинами и 150+ оценками,
-последовательно показывая каждую операцию с понятным выводом в консоль.
+Populates the model with 30 students, 2 groups, 2 subjects, and over 150 grades,
+demonstrating each operation sequentially with clear console output.
 
-## Тесты
+## Tests
 
-`src/test/java/gradebook/GradeJournalTest.java` — 19 сценариев JUnit 5:
-граничные значения баллов (0/60/61/86/87/100), проверки выброса исключений
-(`assertThrows`), контракт `equals/hashCode`, ведомость на дату, лимит пересдач, рейтинг.
+`src/test/java/gradebook/GradeJournalTest.java` — 19 JUnit 5 test scenarios:
+covers boundary values ​​for grades (0/60/61/86/87/100), exception handling (`assertThrows`),
+`equals/hashCode` contracts, date-based grade reports, retake limits, and rankings.
 
-## Инкапсуляция
+## Encapsulation
 
-Все поля закрыты; списки наружу возвращаются неизменяемыми копиями,
-изменяемые объекты извне не сохраняются без копирования.
+All fields are private; lists are returned as immutable copies,
+and mutable objects passed from outside are copied before being stored.
